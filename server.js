@@ -59,9 +59,14 @@ app.get("/check", async (req, res) => {
     const license = result.rows[0];
 
     const now = new Date();
-    if (new Date(license.expire_at) < now) {
-      return res.json({ valid: false, message: "License expired" });
-    }
+
+if (license.status !== "active") {
+  return res.json({ valid: false, message: "License not activated" });
+}
+
+if (new Date(license.expire_at) < now) {
+  return res.json({ valid: false, message: "License expired" });
+}
 
     res.json({
       valid: true,
