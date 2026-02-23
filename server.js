@@ -12,8 +12,19 @@ const pool = new Pool({
   },
 });
 
-app.get("/", (req, res) => {
-  res.send("License Server Running 🚀");
+app.get("/", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({
+      status: "Server running",
+      db_time: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Database connection failed",
+    });
+  }
 });
 
 app.listen(process.env.PORT || 3000, () => {
