@@ -7,7 +7,9 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
+// =======================
+// DATABASE CONNECTION
+// =======================
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -16,7 +18,10 @@ const pool = new Pool({
   },
 });
 
-// Test server + database
+// =======================
+// TEST SERVER + DATABASE
+// =======================
+
 app.get("/", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -30,7 +35,10 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Check license
+// =======================
+// CHECK LICENSE
+// =======================
+
 app.get("/check", async (req, res) => {
   try {
     const { key } = req.query;
@@ -68,7 +76,54 @@ app.get("/check", async (req, res) => {
   }
 });
 
-// Start server
+// =======================
+// CREATE LICENSE (BY DAYS)
+// =======================
+
+app.post("/create-license", async (req, res) => {
+  try {
+    const { days } = req.body;
+
+    if (!days || ![7, 30, 180, 365].includes(days)) {
+      return res.json({
+        success: false,
+        message: "Invalid days value (allowed: 7,30,180,365)"
+      });
+    }
+
+    // Generate random license key
+    const licenseKey =
+      "LIC-" +
+      Math.random().toString(36).substring(2, 8).toUpperCase() +
+      "-" +
+      Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Calculate expire date
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + days);
+
+    await pool.query(
+      `INSERT INTO licenses (license_key, plan, expire_at, status)
+       VALUES ($1, $2, $3, $4)`,
+      [licenseKey, "pro", expireDate, "inactive"]
+    );
+
+    res.json({
+      success: true,
+      license_key: licenseKey,
+      expire_at: expireDate,
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =======================
+// START SERVER
+// =======================
+
 app.listen(PORT, () => {
   console.log("Server started on port " + PORT);
 });
