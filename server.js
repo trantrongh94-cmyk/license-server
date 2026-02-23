@@ -5,7 +5,10 @@ const { Pool } = require("pg");
 const app = express();
 app.use(express.json());
 
+const PORT = process.env.PORT || 3000;
+
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -13,6 +16,7 @@ const pool = new Pool({
   },
 });
 
+// Test server + database
 app.get("/", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -24,7 +28,9 @@ app.get("/", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Database error" });
   }
-});   //
+});
+
+// Check license
 app.get("/check", async (req, res) => {
   try {
     const { key } = req.query;
@@ -61,23 +67,8 @@ app.get("/check", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-  });
-});
-  });
-  try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({
-      status: "Server running",
-      db_time: result.rows[0],
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Database connection failed",
-    });
-  }
-});
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server started");
+// Start server
+app.listen(PORT, () => {
+  console.log("Server started on port " + PORT);
 });
